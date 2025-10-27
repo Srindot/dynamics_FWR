@@ -1,5 +1,5 @@
 {
-    "name": "Introduction to UAV Assignment 2 Q2",
+    "name": "Mujoco Dynamics of FWR",
     "privileged": true,
     "remoteUser": "appuser",
     "image": "mjx:dev1",
