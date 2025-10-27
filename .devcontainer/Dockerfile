@@ -31,6 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd --create-home --shell /bin/bash appuser
 USER appuser
 WORKDIR /home/appuser
+USER root
+RUN apt-get update && apt-get install -y sudo \
+    && echo "appuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+USER appuser
 
 # Set up a virtual environment for Python packages.
 RUN python3.11 -m venv /home/appuser/venv
