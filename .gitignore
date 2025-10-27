@@ -1,0 +1,2 @@
+# Ignore xml files creted by mujoco sims
+*.xml
