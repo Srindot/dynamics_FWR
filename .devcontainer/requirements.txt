@@ -1,0 +1,17 @@
+# JAX with CUDA 12 support. This is the core of our accelerated computing stack.
+# It installs jax, a compatible jaxlib, and the necessary CUDA plugin.
+jax[cuda12]
+
+# MuJoCo and its JAX-based implementation, MJX.
+# mujoco-mjx depends on mujoco, so both will be installed.
+mujoco
+mujoco-mjx
+
+# Common scientific computing and visualization libraries.
+numpy
+matplotlib
+scipy
+
+# For rendering videos and images in notebooks or scripts.
+mediapy
+Pillow
