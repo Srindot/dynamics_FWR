@@ -6,6 +6,7 @@ jax[cuda12]
 # mujoco-mjx depends on mujoco, so both will be installed.
 mujoco
 mujoco-mjx
+wrap_lang
 
 # Common scientific computing and visualization libraries.
 numpy
