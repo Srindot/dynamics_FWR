@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglew-dev \
     libglfw3-dev \
     patchelf \
+    mesa-utils \
+    x11-apps \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for better security and to avoid permission issues.
