@@ -1,0 +1,30 @@
+<mujoco model="bat_bot">
+  <option timestep="0.0001" gravity="0 0 -9.81" />
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+    <material name="fuselage_mat" rgba="0.8 0.5 0.5 1"/> <material name="wing_bone_mat" rgba="0.8 0.6 1.0 1"/> </asset>
+
+  <worldbody>
+    <geom name="floor" size="0 0 .05" type="plane" material="grid" condim="3"/>
+    <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+
+    <body name="fuselage" pos="0 0 1">
+      <joint type="free"/> 
+      <geom type="box" size="0.05 0.1 0.02" mass="0.5" material="fuselage_mat"/>
+
+      <body name="left_wing_bone" pos="0 0.1 0" euler="0 0 0">
+        <joint name="left_flap_joint" axis="0 1 0" range="-45 45" stiffness="0.1"/>
+        
+        <geom type="capsule" fromto="0 0 0  0.3 0 0" size="0.01" material="wing_bone_mat"/>
+        
+        <site name="bone_tip" pos="0.3 0 0" size="0.01"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position joint="left_flap_joint" kp="10" name="left_flap_servo"/>
+  </actuator>
+</mujoco>
