@@ -1,19 +1,19 @@
 # Use an official NVIDIA CUDA 12 development image as the base.
-# The 'devel' tag includes the full CUDA toolkit, compiler (nvcc), and debugging tools,
-# which are essential for building Python packages that have C++/CUDA extensions.
-# Ubuntu 22.04 is a stable, modern base OS.
 FROM nvidia/cuda:12.4.0-devel-ubuntu22.04
 
 # Set environment variables to prevent interactive prompts during package installation.
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
+# --- UTF-8 CONFIGURATION START ---
+# Set the locale environment variables so Python and terminal tools don't fail on Unicode.
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+# --- UTF-8 CONFIGURATION END ---
+
 # Install system dependencies.
-# - build-essential: Compilers (gcc, g++) and tools needed for building software.
-# - python3.11, python3-pip, python3-venv: A modern version of Python and its package management tools.
-# - git, wget: Standard tools for version control and downloading files.
-# - Rendering libraries for MuJoCo's viewer: MuJoCo requires OpenGL libraries to render simulations.
-#   libgl1-mesa-glx, libglew-dev, and libglfw3-dev are crucial for this.
+# Added 'locales' to the list and added a step to generate the UTF-8 locale.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3.11 \
@@ -21,18 +21,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     git \
     wget \
+    locales \
     libgl1-mesa-glx \
     libglew-dev \
     libglfw3-dev \
     patchelf \
     mesa-utils \
     x11-apps \
+    && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for better security and to avoid permission issues.
 RUN useradd --create-home --shell /bin/bash container_usr
 USER container_usr
 WORKDIR /home/container_usr
+
+# Switch to root temporarily to give the user sudo access (optional but often useful in devcontainers)
 USER root
 RUN apt-get update && apt-get install -y sudo \
     && echo "container_usr ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -43,7 +47,6 @@ RUN python3.11 -m venv /home/container_usr/venv
 ENV PATH="/home/container_usr/venv/bin:$PATH"
 
 # Upgrade pip and install Python packages from requirements.txt.
-# Using a requirements file is a best practice for managing dependencies.
 COPY --chown=container_usr:container_usr requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
