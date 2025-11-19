@@ -28,21 +28,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for better security and to avoid permission issues.
-RUN useradd --create-home --shell /bin/bash appuser
-USER appuser
-WORKDIR /home/appuser
+RUN useradd --create-home --shell /bin/bash container_usr
+USER container_usr
+WORKDIR /home/container_usr
 USER root
 RUN apt-get update && apt-get install -y sudo \
-    && echo "appuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-USER appuser
+    && echo "container_usr ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+USER container_usr
 
 # Set up a virtual environment for Python packages.
-RUN python3.11 -m venv /home/appuser/venv
-ENV PATH="/home/appuser/venv/bin:$PATH"
+RUN python3.11 -m venv /home/container_usr/venv
+ENV PATH="/home/container_usr/venv/bin:$PATH"
 
 # Upgrade pip and install Python packages from requirements.txt.
 # Using a requirements file is a best practice for managing dependencies.
-COPY --chown=appuser:appuser requirements.txt .
+COPY --chown=container_usr:container_usr requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 

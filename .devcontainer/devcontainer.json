@@ -1,10 +1,10 @@
 {
     "name": "Mujoco Dynamics of FWR",
     "privileged": true,
-    "remoteUser": "appuser",
+    "remoteUser": "container_usr",
     "image": "mjx:dev1",
-    "workspaceFolder": "/home/appuser/workspace",
-    "workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/home/appuser/workspace",
+    "workspaceFolder": "/home/container_usr/workspace",
+    "workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/home/container_usr/workspace",
     "customizations": {
         "vscode": {
             "extensions": [
