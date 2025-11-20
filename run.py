@@ -1,49 +1,55 @@
 import mujoco
 import mujoco.mjx as mjx
+import mujoco.viewer
 import jax
 import jax.numpy as jnp
+import time
 
-# 1. Load the model
+# 1. Load Model (CPU)
 model = mujoco.MjModel.from_xml_path("bat_wing.xml")
-# Put model on GPU
+data = mujoco.MjData(model)
+
+# 2. Move to GPU (MJX)
 mx_model = mjx.put_model(model)
-# Create data structure
 mx_data = mjx.make_data(model)
 
+# ... [Your aerodynamic_forces function here] ...
 def aerodynamic_forces(data):
-    # dx is the state (position, velocity)
-    
-    # NOTE: data.qvel is a flat array of all joint velocities.
-    # You will need to map site/body IDs to these indices to get 
-    # specific wing node velocities.
-    
-    # Example placeholder for calculating forces
-    # In JAX/MJX, we usually create a vector of zeros and update specific indices
-    calculated_forces = jnp.zeros(mx_model.nv) 
-    
-    # ... Your BET logic here ...
-    
-    return calculated_forces
+    return jnp.zeros(mx_model.nv) # Placeholder
 
-# 2. Define the step function and JIT compile it
-# The @jax.jit decorator compiles this function to XLA (GPU/TPU)
 @jax.jit
 def step_fn(m, d):
-    # Calculate aero forces
     forces = aerodynamic_forces(d)
-    
-    # Inject forces into the simulation
     d = d.replace(qfrc_applied=forces)
-    
-    # Step the physics
     return mjx.step(m, d)
 
-# 3. Run the loop
-print("Compiling...")
-mx_data = step_fn(mx_model, mx_data) # First call triggers compilation
-print("Running simulation...")
-
-for _ in range(1000):
+# 3. Launch Viewer (Passive Mode)
+# We use "launch_passive" so we can control the loop ourselves
+with mujoco.viewer.launch_passive(model, data) as viewer:
+    
+    # Compile the function first (warmup)
+    print("Compiling JIT...")
     mx_data = step_fn(mx_model, mx_data)
     
-print("Done.")
+    start_time = time.time()
+    
+    while viewer.is_running():
+        step_start = time.time()
+
+        # --- GPU PHYSICS ---
+        # Run multiple physics steps per render frame for speed
+        # (Standard MoJoCo is 2ms step, 60Hz video = ~30 steps per frame)
+        for _ in range(30):
+            mx_data = step_fn(mx_model, mx_data)
+
+        # --- SYNC TO CPU ---
+        # This pulls the GPU data back to the CPU 'data' object
+        mjx.get_data_into(mjx.get_data(mx_model, mx_data), model, data)
+
+        # --- UPDATE GUI ---
+        viewer.sync()
+
+        # Slow down to match real-time (optional, otherwise it runs at 100000x speed)
+        time_until_next_frame = model.opt.timestep - (time.time() - step_start)
+        if time_until_next_frame > 0:
+            time.sleep(time_until_next_frame)
