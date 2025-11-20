@@ -1,33 +1,49 @@
 import mujoco
 import mujoco.mjx as mjx
+import jax
 import jax.numpy as jnp
 
 # 1. Load the model
 model = mujoco.MjModel.from_xml_path("bat_wing.xml")
-mx = mjx.put_model(model)
+# Put model on GPU
+mx_model = mjx.put_model(model)
+# Create data structure
+mx_data = mjx.make_data(model)
 
-def aerodynamic_forces(dx):
+def aerodynamic_forces(data):
     # dx is the state (position, velocity)
     
-    # 1. Get velocity of every "node" in the wing skin
-    # In MJX, you access this via dx.qvel (velocities)
+    # NOTE: data.qvel is a flat array of all joint velocities.
+    # You will need to map site/body IDs to these indices to get 
+    # specific wing node velocities.
     
-    # 2. Calculate Angle of Attack (alpha) per node
-    # This is your linear algebra: Cross product of velocity and wing chord vector
+    # Example placeholder for calculating forces
+    # In JAX/MJX, we usually create a vector of zeros and update specific indices
+    calculated_forces = jnp.zeros(mx_model.nv) 
     
-    # 3. Apply BET formulas
-    # Lift = 0.5 * rho * V^2 * Cl * Area
+    # ... Your BET logic here ...
     
-    # 4. Return the force vector for each body
-    calculated_forces = 0
     return calculated_forces
 
-def step_fn(model, data):
+# 2. Define the step function and JIT compile it
+# The @jax.jit decorator compiles this function to XLA (GPU/TPU)
+@jax.jit
+def step_fn(m, d):
     # Calculate aero forces
-    forces = aerodynamic_forces(data)
+    forces = aerodynamic_forces(d)
     
     # Inject forces into the simulation
-    data = data.replace(qfrc_applied=forces)
+    d = d.replace(qfrc_applied=forces)
     
     # Step the physics
-    return mjx.step(model, data)
+    return mjx.step(m, d)
+
+# 3. Run the loop
+print("Compiling...")
+mx_data = step_fn(mx_model, mx_data) # First call triggers compilation
+print("Running simulation...")
+
+for _ in range(1000):
+    mx_data = step_fn(mx_model, mx_data)
+    
+print("Done.")
